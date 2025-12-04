@@ -22,18 +22,18 @@ import os
 import subprocess
 import glob
 from pathlib import Path
+import argparse
 
 
 # Configuration - use relative paths from script location
 SCRIPT_DIR = Path(__file__).parent.resolve()
 REPO_ROOT = SCRIPT_DIR.parent.parent
-INPUT_DIR = REPO_ROOT / "results" / "med_color"
+DEFAULT_INPUT_DIR = REPO_ROOT / "results" / "med_color"
 
 # Output directories for videos and gifs
 VIDEO_OUTPUT_DIR = REPO_ROOT / "results" / "videos"
 GIF_OUTPUT_DIR = REPO_ROOT / "results" / "gifs"
-VIDEO_NAME = "med_color_variation"
-FRAMERATE = 10  # fps - lower = slower/smoother, higher = faster
+DEFAULT_FRAMERATE = 10  # fps - lower = slower/smoother, higher = faster
 
 
 def find_images(directory):
@@ -135,12 +135,21 @@ def create_gif(input_pattern, output_path, framerate=15):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Convert a sequence of PNG images into an MP4 video and GIF using ffmpeg.")
+    parser.add_argument("input_dir", type=str, nargs="?", default=str(DEFAULT_INPUT_DIR), help="Directory containing PNG images (default: results/med_color)")
+    parser.add_argument("--framerate", type=int, default=DEFAULT_FRAMERATE, help="Frame rate for video and GIF (default: 10)")
+    args = parser.parse_args()
+
+    input_dir = Path(args.input_dir).resolve()
+    framerate = args.framerate
+    folder_name = input_dir.name
+
     print("=" * 70)
-    print("Med Color Video Generator")
+    print(f"Video Generator for: {folder_name}")
     print("=" * 70)
     print(f"Script directory: {SCRIPT_DIR}")
     print(f"Repository root: {REPO_ROOT}")
-    print(f"Input directory: {INPUT_DIR}")
+    print(f"Input directory: {input_dir}")
     print(f"Video output directory: {VIDEO_OUTPUT_DIR}")
     print(f"GIF output directory: {GIF_OUTPUT_DIR}")
     print()
@@ -153,43 +162,45 @@ def main():
         return
     
     # Find images
-    images = find_images(INPUT_DIR)
+    images = find_images(input_dir)
     
     if not images:
-        print(f"✗ No images found in {INPUT_DIR}")
-        print("  Run the color_variation_capture.py script in Isaac Sim first.")
+        print(f"✗ No images found in {input_dir}")
+        print("  Make sure the directory contains PNG images.")
         return
     
     print(f"Found {len(images)} images")
     
     # Determine input pattern based on where images are
     first_image = Path(images[0])
-    if first_image.parent == Path(INPUT_DIR):
-        # Images are directly in INPUT_DIR
-        input_pattern = str(Path(INPUT_DIR) / "rgb_*.png")
+    if first_image.parent == input_dir:
+        # Images are directly in input_dir
+        input_pattern = str(input_dir / "rgb_*.png")
+        if not glob.glob(input_pattern):
+            input_pattern = str(input_dir / "*.png")
     else:
         # Images are in rgb/ subdirectory
-        input_pattern = str(Path(INPUT_DIR) / "rgb" / "*.png")
+        input_pattern = str(input_dir / "rgb" / "*.png")
     
     # Create output directories if needed
     VIDEO_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     GIF_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     # Generate MP4
-    mp4_path = str(VIDEO_OUTPUT_DIR / f"{VIDEO_NAME}.mp4")
-    mp4_success = create_mp4(input_pattern, mp4_path, FRAMERATE)
+    mp4_path = str(VIDEO_OUTPUT_DIR / f"{folder_name}.mp4")
+    mp4_success = create_mp4(input_pattern, mp4_path, framerate)
 
     # Generate GIF
-    gif_path = str(GIF_OUTPUT_DIR / f"{VIDEO_NAME}.gif")
-    gif_success = create_gif(input_pattern, gif_path, FRAMERATE)
+    gif_path = str(GIF_OUTPUT_DIR / f"{folder_name}.gif")
+    gif_success = create_gif(input_pattern, gif_path, framerate)
     
     # Summary
     print("\n" + "=" * 70)
     print("SUMMARY")
     print("=" * 70)
     print(f"Input images: {len(images)} frames")
-    print(f"Frame rate: {FRAMERATE} fps")
-    print(f"Duration: {len(images) / FRAMERATE:.1f} seconds")
+    print(f"Frame rate: {framerate} fps")
+    print(f"Duration: {len(images) / framerate:.1f} seconds")
     
     if mp4_success:
         mp4_size = os.path.getsize(mp4_path) / 1024 / 1024
@@ -199,8 +210,8 @@ def main():
         gif_size = os.path.getsize(gif_path) / 1024 / 1024
         print(f"✓ GIF: {gif_path} ({gif_size:.2f} MB)")
     
-    print("\nTip: For smoother/slower playback, decrease FRAMERATE in this script")
-    print("     For faster playback, increase FRAMERATE")
+    print("\nTip: For smoother/slower playback, decrease --framerate")
+    print("     For faster playback, increase --framerate")
     print("=" * 70)
 
 
