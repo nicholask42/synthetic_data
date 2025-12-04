@@ -35,7 +35,7 @@
                         "selected_in_dock": true,
                         "title": "Viewport",
                         "visible": true,
-                        "width": 872.5
+                        "width": 954.5
                       }
                     ],
                     "dock_id": 7,
@@ -48,12 +48,12 @@
                         "dock_tab_bar_enabled": true,
                         "dock_tab_bar_visible": false,
                         "height": 606.0,
-                        "position_x": 917.5,
+                        "position_x": 999.5,
                         "position_y": 24.0,
                         "selected_in_dock": true,
                         "title": "Viewport 2",
                         "visible": true,
-                        "width": 873.0
+                        "width": 950.0
                       }
                     ],
                     "dock_id": 8,
@@ -77,17 +77,17 @@
                 "selected_in_dock": false,
                 "title": "Console",
                 "visible": true,
-                "width": 1790.5
+                "width": 1949.5
               },
               {
                 "dock_id": 6,
                 "height": 719.0,
                 "position_x": 0.0,
-                "position_y": 953.0,
+                "position_y": 632.0,
                 "selected_in_dock": false,
                 "title": "Content",
                 "visible": true,
-                "width": 1790.5
+                "width": 1949.5
               },
               {
                 "dock_id": 6,
@@ -99,7 +99,7 @@
                 "selected_in_dock": true,
                 "title": "Script Editor",
                 "visible": true,
-                "width": 1790.5
+                "width": 1949.5
               }
             ],
             "dock_id": 6,
@@ -118,12 +118,12 @@
                 "dock_tab_bar_enabled": true,
                 "dock_tab_bar_visible": true,
                 "height": 662.5,
-                "position_x": 1792.5,
+                "position_x": 1951.5,
                 "position_y": 24.0,
                 "selected_in_dock": true,
                 "title": "Stage",
                 "visible": true,
-                "width": 767.5
+                "width": 608.5
               },
               {
                 "dock_id": 3,
@@ -133,7 +133,7 @@
                 "selected_in_dock": false,
                 "title": "Layer",
                 "visible": true,
-                "width": 767.5
+                "width": 608.5
               },
               {
                 "dock_id": 3,
@@ -143,7 +143,7 @@
                 "selected_in_dock": false,
                 "title": "Render Settings",
                 "visible": true,
-                "width": 767.5
+                "width": 608.5
               }
             ],
             "dock_id": 3,
@@ -156,12 +156,12 @@
                 "dock_tab_bar_enabled": true,
                 "dock_tab_bar_visible": true,
                 "height": 662.5,
-                "position_x": 1792.5,
+                "position_x": 1951.5,
                 "position_y": 688.5,
                 "selected_in_dock": true,
                 "title": "Property",
                 "visible": true,
-                "width": 767.5
+                "width": 608.5
               }
             ],
             "dock_id": 4,
@@ -193,6 +193,16 @@
     "title": "620518dc-d13a-11f0-8fc9-0526abe2cb55",
     "visible": false,
     "width": 400.0
+  },
+  {
+    "dock_id": 0,
+    "height": 450.0,
+    "position_x": 740.0,
+    "position_y": 463.0,
+    "selected_in_dock": false,
+    "title": "Open...",
+    "visible": false,
+    "width": 1080.0
   },
   {
     "dock_id": 0,
