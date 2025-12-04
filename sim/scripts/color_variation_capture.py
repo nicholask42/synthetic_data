@@ -26,7 +26,7 @@ OUTPUT_DIR = "/home/nick/git/synthetic_data/results/med_color"
 RESOLUTION = (1280, 720)
 
 # Color variation settings
-NUM_COLOR_STEPS = 30  # Number of different colors to capture
+NUM_COLOR_STEPS = 240  # Number of different colors to capture
 COLOR_MODE = "hue_sweep"  # Options: "hue_sweep", "rainbow", "custom"
 
 # ----------------------
@@ -98,18 +98,20 @@ def set_material_color(stage, material_path, color):
 
 
 def generate_color_range(num_steps, mode="hue_sweep"):
-    """Generate a range of colors."""
+    """Generate a range of colors that loops seamlessly."""
     colors = []
     
     if mode == "hue_sweep":
         # Sweep through hue while keeping saturation and value constant
+        # Use num_steps without adding 1 so the last color is different from first
+        # This creates a seamless loop when the video repeats
         for i in range(num_steps):
-            hue = i / num_steps  # 0 to 1
+            hue = i / num_steps  # 0 to (num_steps-1)/num_steps, never reaches 1.0
             rgb = colorsys.hsv_to_rgb(hue, 0.8, 0.9)  # High saturation, high value
             colors.append(rgb)
     
     elif mode == "rainbow":
-        # Classic rainbow colors
+        # Classic rainbow colors that loop seamlessly
         for i in range(num_steps):
             hue = i / num_steps
             rgb = colorsys.hsv_to_rgb(hue, 1.0, 1.0)

@@ -5,7 +5,9 @@ create_video.py
 Converts a sequence of PNG images into an MP4 video or GIF using ffmpeg.
 
 Usage:
-    python create_video.py
+    python3 sim/scripts/create_video.py  (from repo root)
+    OR
+    python3 create_video.py  (from sim/scripts directory)
 
 This script will:
 1. Find all PNG images in the med_color results directory
@@ -22,24 +24,31 @@ import glob
 from pathlib import Path
 
 
-# Configuration
-INPUT_DIR = "/home/nick/git/synthetic_data/results/med_color"
-OUTPUT_DIR = "/home/nick/git/synthetic_data/results"
+# Configuration - use relative paths from script location
+SCRIPT_DIR = Path(__file__).parent.resolve()
+REPO_ROOT = SCRIPT_DIR.parent.parent
+INPUT_DIR = REPO_ROOT / "results" / "med_color"
+
+# Output directories for videos and gifs
+VIDEO_OUTPUT_DIR = REPO_ROOT / "results" / "videos"
+GIF_OUTPUT_DIR = REPO_ROOT / "results" / "gifs"
 VIDEO_NAME = "med_color_variation"
-FRAMERATE = 15  # fps - lower = slower/smoother, higher = faster
+FRAMERATE = 10  # fps - lower = slower/smoother, higher = faster
 
 
 def find_images(directory):
     """Find all PNG images in the directory and return sorted list."""
+    directory = Path(directory)
+    
     # Try different possible patterns
     patterns = [
-        os.path.join(directory, "rgb_*.png"),
-        os.path.join(directory, "rgb", "*.png"),
-        os.path.join(directory, "*.png"),
+        directory / "rgb_*.png",
+        directory / "rgb" / "*.png",
+        directory / "*.png",
     ]
     
     for pattern in patterns:
-        images = sorted(glob.glob(pattern))
+        images = sorted(glob.glob(str(pattern)))
         if images:
             print(f"Found {len(images)} images matching pattern: {pattern}")
             return images
@@ -129,6 +138,12 @@ def main():
     print("=" * 70)
     print("Med Color Video Generator")
     print("=" * 70)
+    print(f"Script directory: {SCRIPT_DIR}")
+    print(f"Repository root: {REPO_ROOT}")
+    print(f"Input directory: {INPUT_DIR}")
+    print(f"Video output directory: {VIDEO_OUTPUT_DIR}")
+    print(f"GIF output directory: {GIF_OUTPUT_DIR}")
+    print()
     
     # Check if ffmpeg is available
     try:
@@ -142,28 +157,30 @@ def main():
     
     if not images:
         print(f"✗ No images found in {INPUT_DIR}")
-        print("  Run the med_color_capture.py script in Isaac Sim first.")
+        print("  Run the color_variation_capture.py script in Isaac Sim first.")
         return
     
     print(f"Found {len(images)} images")
     
     # Determine input pattern based on where images are
-    if "rgb_" in images[0]:
+    first_image = Path(images[0])
+    if first_image.parent == Path(INPUT_DIR):
         # Images are directly in INPUT_DIR
-        input_pattern = os.path.join(INPUT_DIR, "rgb_*.png")
+        input_pattern = str(Path(INPUT_DIR) / "rgb_*.png")
     else:
         # Images are in rgb/ subdirectory
-        input_pattern = os.path.join(INPUT_DIR, "rgb", "*.png")
+        input_pattern = str(Path(INPUT_DIR) / "rgb" / "*.png")
     
-    # Create output directory if needed
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
-    
+    # Create output directories if needed
+    VIDEO_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    GIF_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
     # Generate MP4
-    mp4_path = os.path.join(OUTPUT_DIR, f"{VIDEO_NAME}.mp4")
+    mp4_path = str(VIDEO_OUTPUT_DIR / f"{VIDEO_NAME}.mp4")
     mp4_success = create_mp4(input_pattern, mp4_path, FRAMERATE)
-    
+
     # Generate GIF
-    gif_path = os.path.join(OUTPUT_DIR, f"{VIDEO_NAME}.gif")
+    gif_path = str(GIF_OUTPUT_DIR / f"{VIDEO_NAME}.gif")
     gif_success = create_gif(input_pattern, gif_path, FRAMERATE)
     
     # Summary
