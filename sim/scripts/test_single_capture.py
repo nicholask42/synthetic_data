@@ -47,7 +47,14 @@ def main():
     print("=" * 60)
     
     # Disable capture on play (required for manual step-based capture)
+    print("Configuring orchestrator...")
     rep.orchestrator.set_capture_on_play(False)
+    print(f"  Capture on play disabled")
+    
+    # Set DLSS to Quality mode for best results
+    import carb.settings
+    carb.settings.get_settings().set("/rtx/post/dlss/execMode", 2)
+    print(f"  DLSS set to Quality mode")
     
     # Ensure output directory exists
     output_path = Path(OUTPUT_DIR)
@@ -70,22 +77,34 @@ def main():
     print("\nSetting up camera render product...")
     render_product = rep.create.render_product(
         CAMERA_PRIM_PATH,
-        resolution=RESOLUTION
+        resolution=RESOLUTION,
+        name="test_camera_rp"
     )
     
     print(f"Render product created: {render_product}")
     print(f"Render product path: {render_product.path if hasattr(render_product, 'path') else 'N/A'}")
+    print(f"Render product resolution: {render_product.resolution if hasattr(render_product, 'resolution') else 'N/A'}")
     
     # Create a basic writer to save RGB images
     print("Setting up writer...")
     writer = rep.writers.get("BasicWriter")
+    print(f"Writer object: {writer}")
+    print(f"Writer type: {type(writer)}")
+    
     writer.initialize(
         output_dir=OUTPUT_DIR,
         rgb=True,
         colorize_instance_segmentation=False,
         colorize_semantic_segmentation=False
     )
+    print(f"Writer initialized with output_dir: {OUTPUT_DIR}")
+    
+    # Attach the render product to the writer
+    print(f"Attaching render product: {render_product}")
     writer.attach([render_product])
+    print(f"Writer attached to render product")
+    print(f"Writer backend: {writer._backend_type if hasattr(writer, '_backend_type') else 'Unknown'}")
+    print(f"Writer annotators: {writer._annotators if hasattr(writer, '_annotators') else 'Unknown'}")
     
     # Count existing images before capture
     existing_images = glob.glob(os.path.join(OUTPUT_DIR, "**/*.png"), recursive=True)
@@ -98,25 +117,61 @@ def main():
     async def capture_and_verify():
         """Async function to capture a single frame and verify output."""
         # Give the app a few updates to ensure everything is ready
-        print("Initializing render...")
+        print("\nInitializing render...")
         for i in range(5):
             await omni.kit.app.get_app().next_update_async()
         
+        # Start the orchestrator (CRITICAL!)
+        print("Starting orchestrator...")
+        rep.orchestrator.run()
+        print(f"Orchestrator is started: {rep.orchestrator.get_is_started()}")
+        
         # Trigger one capture step
         print("Triggering replicator step...")
-        await rep.orchestrator.step_async(rt_subframes=4)
+        try:
+            await rep.orchestrator.step_async(rt_subframes=4)
+            print(f"Step completed successfully")
+        except Exception as e:
+            print(f"ERROR during step: {e}")
+            import traceback
+            traceback.print_exc()
+            return
+        
+        # Stop the orchestrator to prevent continuous capture
+        print("Stopping orchestrator...")
+        rep.orchestrator.stop()
         
         # Wait for all data to be written to disk (CRITICAL!)
         print("Waiting for data to be written to disk...")
-        await rep.orchestrator.wait_until_complete_async()
+        try:
+            await rep.orchestrator.wait_until_complete_async()
+            print("Write complete signal received")
+        except Exception as e:
+            print(f"ERROR during wait_until_complete: {e}")
+            import traceback
+            traceback.print_exc()
+        
+        # Additional wait to ensure filesystem sync
+        print("Allowing filesystem sync...")
+        await asyncio.sleep(1.0)
         
         # Verify the output
         print("\n" + "=" * 60)
         print("Verifying output...")
         print("=" * 60)
         
+        # Check for any files created
+        all_files_recursive = []
+        for root, dirs, files in os.walk(OUTPUT_DIR):
+            for file in files:
+                all_files_recursive.append(os.path.join(root, file))
+        
+        print(f"Total files in output directory (recursive): {len(all_files_recursive)}")
+        
         new_images = glob.glob(os.path.join(OUTPUT_DIR, "**/*.png"), recursive=True)
         num_new = len(new_images)
+        
+        print(f"PNG images found: {num_new}")
         
         if num_new > num_existing:
             print(f"✓ SUCCESS: {num_new - num_existing} new image(s) captured!")
@@ -133,6 +188,14 @@ def main():
             print("2. Verify the scene has geometry visible to the camera")
             print("3. Ensure the camera path is correct")
             
+            # Show all files that were created
+            if all_files_recursive:
+                print(f"\nAll files found in output directory:")
+                for file_path in all_files_recursive:
+                    rel_path = os.path.relpath(file_path, OUTPUT_DIR)
+                    file_size = os.path.getsize(file_path)
+                    print(f"  - {rel_path} ({file_size:,} bytes)")
+            
             # Check directory structure
             print(f"\nDirectory structure of {OUTPUT_DIR}:")
             for root, dirs, files in os.walk(OUTPUT_DIR):
@@ -142,6 +205,13 @@ def main():
                 subindent = ' ' * 2 * (level + 1)
                 for file in files:
                     print(f'{subindent}{file}')
+            
+            # Additional diagnostic info
+            print(f"\nDiagnostic information:")
+            print(f"  Writer is valid: {writer is not None}")
+            print(f"  Render product is valid: {render_product is not None}")
+            print(f"  Output directory exists: {os.path.exists(OUTPUT_DIR)}")
+            print(f"  Output directory is writable: {os.access(OUTPUT_DIR, os.W_OK)}")
         
         print("=" * 60)
         
