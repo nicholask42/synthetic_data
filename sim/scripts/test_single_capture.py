@@ -121,25 +121,17 @@ def main():
         for i in range(5):
             await omni.kit.app.get_app().next_update_async()
         
-        # Start the orchestrator (CRITICAL!)
-        print("Starting orchestrator...")
-        rep.orchestrator.run()
-        print(f"Orchestrator is started: {rep.orchestrator.get_is_started()}")
-        
-        # Trigger one capture step
-        print("Triggering replicator step...")
+        # Trigger ONE capture step directly (don't call run() first)
+        print("Triggering single replicator step...")
         try:
-            await rep.orchestrator.step_async(rt_subframes=4)
+            # Call step_async directly without run() to get exactly one capture
+            await rep.orchestrator.step_async(rt_subframes=4, delta_time=0.0, pause_timeline=True)
             print(f"Step completed successfully")
         except Exception as e:
             print(f"ERROR during step: {e}")
             import traceback
             traceback.print_exc()
             return
-        
-        # Stop the orchestrator to prevent continuous capture
-        print("Stopping orchestrator...")
-        rep.orchestrator.stop()
         
         # Wait for all data to be written to disk (CRITICAL!)
         print("Waiting for data to be written to disk...")
