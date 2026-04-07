@@ -1,0 +1,13 @@
+# Requirements for sim/scripts
+#
+# create_video.py has no pip dependencies (stdlib only + system ffmpeg).
+#
+# The capture scripts (color_variation_capture.py, light_position_capture.py,
+# object_position_capture.py, object_scale_capture.py, test_single_capture.py)
+# depend on omni.replicator.core, omni.isaac.core, omni.usd, and omni.kit.app.
+# These are bundled with Isaac Sim and cannot be installed via pip. Those scripts
+# must be run inside Isaac Sim's Script Editor.
+#
+# usd-core provides the `pxr` package (OpenUSD Python bindings) for working with
+# USD files outside of Isaac Sim (e.g. inspection, tooling, unit tests).
+usd-core
